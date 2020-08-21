@@ -1,0 +1,18 @@
+logging:
+  level:
+    root: info #yml文件配置会覆盖 config 中引入的配置文件的配置
+    com.atzyy: debug
+  file:
+    # name: spring.log #指定日志文件,可以指定完整的路径(G:/xxx/zzz)，不指定时在当前项目下生成。指定name会覆盖 path,
+    path: ./spring/logs #指定日志路径,日志文件命名默认使用 springboot.log
+  pattern:
+    console: "%d{yyyy-MM-dd} [%thread] %-5level %logger{50} -%msg%n" #在控制台输出日志格式
+    file: "%d{yyyy-MM-dd} [%thread] %-5level %logger{50} -%msg%n"
+    #rolling-file-name: #设置滚动日志文件的文件名
+  config: classpath:logback-spring.xml #指定日志配置文件 logback.xml，默认会扫描 classpath 路径下的 logback、logback-spring.xml 文件，
+  # 区别是 ：直接使用 logback.xml 作为日志的配置文件，spring 不能完全控制日志的初始化过程的
+
+
+server:
+  port: 9000
+

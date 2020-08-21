@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    logbak 配置详解（参考官网：http://www.logback.cn）
+    scan：当此属性设置为 true 时，配置文件如果发生变化，将被重新加载，默认值true
+    scanPeriod: 设置监测的时间间隔，默认单位毫秒 默认时间1分钟，当 scan 属性为 true 时次属性生效
+    debug：此属性设置是否打印 logback 内部日志信息，默认值false
+-->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <!-- 用于设置上下文的名称 -->
+    <contextName>logback</contextName>
+
+    <!-- 定义属性，name属性名 value属性值,通过其定义的值将被插入到 logger 的上下文中，可以使用 "${}" 来使用变量 -->
+    <property name="LOG_HOME" value="./logs"/>
+
+    <!--
+        spring 标签提供的属性，只有日志交给 spring 管理时才会生效，即 logback 配置文件为 logback-spring.xml 命名才会生效
+            scope:指定读取的属性作用范围
+            name：属性名称
+            source：属性在 environment 中的名称，即来源 可在 application.yml 文件中配置
+            defaultValue：属性不存在时的默认值
+        配置参数logDir读取application.yml中的log-dir属性，如果没有配置，默认是只logs
+     -->
+    <springProperty scope="context" name="kafkaTopic" source="logback.kafka.topic"/>
+    <springProperty scope="context" name="kafkaServers" source="logback.kafka.servers"/>
+
+    <!-- 获取时间戳字符串 key：标识次标签的名称 datePattern：时间戳格式 -->
+    <timestamp key="bySecond" datePattern="yyyy-MM-dd HH:mm:ss" />
+
+    <!-- appender: 负责写日志的组件，它有两个必要属性 name 和 class。name 指定 appender 的名称，
+            class：指定appender的全限定名称,一般有四个 class 可配置
+                1、ConsoleAppender：把日志添加到控制台
+                2、
+     -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 对日志进行格式化
+            c/lo/logger|{length} 输出日志的 logger 名，可有一个整形参数，功能是缩短 logger 名
+            C/class|{length} 输出执行记录调用者的全限定名。尽量避免使用会造成性能问题。
+            contextName/cn 输出上下文名称
+            d/date|{pattern} 输出日志的打印时间
+            F/file 输出执行记录请求的 java 源文件名。尽量避免使用会造成性能问题。
+            caller{depth} 输出日志生成的调用者的位置信息，整数标识输出位置深度。
+            L/line 输出执行日志请求的行号。
+            m/msg/message 输出应用程序提供的信息。
+            M/method 输出日志请求的方法名。尽量避免使用会有性能问题。
+            n 输出平台相关的换行符 \n 或者 \r\n。
+            p/le/level 输出日志级别。
+            r/relative 输出从程序创建到创建日志记录的时间，单位是毫秒。
+            t/thread 输出产生日志的线程名。
+            replace(p){r,t} p为日志内容，r正则表达式，t要替换的内容，及把p中符合r的内容替换为t。
+         -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd} -%5p [%thread] %logger %msg-%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+        FileAppender: 把日志添加到文件，有以下子节点。
+        <file>:被写入的文件名，可以是相对路径也可以是绝对路径。
+        <append>: 如果是 true，日志被追加到文件结尾，如果是 false，清空现存文件，默认是 true。
+        <encoder>:对记录进行格式化。
+        <prudent>:如果是 true，日志会被安全的写入文件，即使其他的 FileAppender 也在写入，但是效率低，默认是 false。
+     -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <!-- 对输出内容格式化 -->
+        <encoder>
+            <pattern>%c %d{dd HH:mm:ss} [%thread] %msg %n</pattern>
+        </encoder>
+        <!-- 要写入的文件 -->
+        <file>./logs/spring.log</file>
+        <!-- 追加写入 -->
+        <append>true</append>
+    </appender>
+
+    <!--
+        RollingFileAppender: 滚动日志输出，有以下子节点
+         <file>:被写入的文件名，可以是相对路径也可以是绝对路径。
+        <append>: 如果是 true，日志被追加到文件结尾，如果是 false，清空现存文件，默认是 true。
+        <encoder>:对记录进行格式化。
+        <prudent>:当为true时，不支持FixedWindowRollingPolicy。
+            支持TimeBasedRollingPolicy，但是有两个限制，1不支持也不允许文件压缩，2不能设置file属性，必须留空。
+        <rollingPolicy>:当发生滚动时，决定 RollingFileAppender 的行为，设计文件移动和重命名。
+        <triggeringPolicy>:告知 RollingAppender 何时激活滚动。
+     -->
+    <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 设置活动的日志文件，日志每次都会输入到该文件，根据轮换设置新建 spring.log 文件，把原来的目录按照 fileNamePattern 设置的文件
+            进行备份。
+        -->
+        <file>./spring/roolinglogs/spring.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%c [%thread] %d{yyyy-MM-dd} %msg %n</pattern>
+        </encoder>
+        <!--
+            rollingPolicy: 滚动策略，class属性指定策略类。包括如下滚动策略
+                TimeBasedRollingPolicy：最常用的滚动策略，它根据时间来制定滚动策略，既负责滚动也负责触发滚动，有以下子节点，
+                （实际上，TimeBaseRollingPolicy 同时实现了 RollingPolicy 与 TriggeringPolicy 接口）
+
+                   <fileNamePattern>: 必要节点，包含文件名及"%d"转换符。RollingFileAppender 的 file 子节点可有可无，通过设置 file ，
+                可以为活动文件和归档文件指定不同位置，当前日志总会记录到 file 指定的文件（活动文件），活动文件的名字不会改变；如果
+                没设置 file，活动文件的名字会根据 fileNamePattern 的值，每隔一段时间改变一次。"/" 或 "\" 会当做目录分隔符。
+
+                    <maxHistroy>: 可选节点，控制保留归档文件的最大数量，超出数量就删除文件。
+
+                 FixedWindowRollingPolicy： 根据固定窗口算法重命名文件的滚动策略。有以下子节点：
+                    <minIndex>:窗口索引最小值
+                    <maxIndex>:窗口索引最大值，当用户指定的窗口过大时，会自动将窗口设置为12。
+                    <fileNamePattern >:
+                    必须包含“%i”例如，假设最小值和最大值分别为1和2，命名模式为 mylog%i.log,会产生归档文件mylog1.log和
+                    mylog2.log。还可以指定文件压缩选项，例如，mylog%i.log.gz 或者 没有log%i.log.zip。
+                 triggeringPolicy:
+
+
+
+                SizeBasedTriggeringPolicy：查看当前活动文件的大小，如果超过指定大小会告知 RollingFileAppender 触发当前活动文件滚动。
+                    只有一个节点:
+                    <maxFileSize>:这是活动文件的大小，默认值是10MB。
+        -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 其中 ${LOG_HOME} 为 java 系统变量中定义的一个变量，可以通过如下方式运行 java -DLOG_HOME="/data/logs"
+                %d用来推算轮转周期，可以指定多个 %d 但是只有一个是主要的。其他的 %d 占位符必须通过 'aux' 标记为辅助的。
+            -->
+            <fileNamePattern>${LOG_HOME}/%d{yyyyMMdd,aux}/spring%d{yyyyMMdd}.log</fileNamePattern>
+            <!-- 保留文档最大数 -->
+            <maxHistory>3</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- logger：用来设置一个包或某一个类的日志打印级别、以及指定 <appender>
+            name: 用来指定受此 logger 约束的包或者类的名称
+            level: 用来设置日志打印级别（不分大小写）— trace、debug、info、warn、error、all 和 off，
+                还有一个特殊值 inherited 或者同义词 null ，代表强制执行上级的级别。
+            addtivity：是否像上级传递打印信息，默认 true
+         logger 可以包含零个或多个 <appender-ref> 元素，用来标识这个 appender 将会被添加到该 logger 中，
+         当不指定 <appender-ref> 时日志是不会输出的
+    -->
+    <!--<logger name="com.atzyy" level="error" addtivity="false" >
+        &lt;!&ndash; 引用日志输出组件 &ndash;&gt;
+        <appender-ref ref="STDOUT"/>
+    </logger>-->
+
+    <!--
+        把日志输出到 kafka 中
+    -->
+    <appender name="kafka" class="com.github.danielwegener.logback.kafka.KafkaAppender">
+        <encoder class="com.github.danielwegener.logback.kafka.encoding.LayoutKafkaMessageEncoder">
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <!-- 时间|环境 |项目名称 |应用名称|错误级别|ip|hostname|[%thread]| %logger{50}| %msg%n -->
+                <pattern>${LOG_PATTERN}
+                </pattern>
+            </layout>
+        </encoder>
+        <topic>${kafkaTopic}</topic>
+        <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.RoundRobinKeyingStrategy"/>
+        <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
+        <producerConfig>bootstrap.servers=${kafkaServers}</producerConfig>
+        <producerConfig>max.block.ms=100</producerConfig>
+        <appender-ref ref="STDOUT"/>
+    </appender>
+
+    <!--
+        spring标签根据配置的 spring.profile 来灵活的配置输出，有一个属性 name 来指定激活的环境，多个使用逗号隔开(dev,test)
+     -->
+    <springProfile name="DEV">
+        <root level="info">
+            <appender-ref ref="STDOUT"/>
+            <!-- 环境中没有配置 kafka 直接引用会报错 -->
+            <!--<appender-ref ref="kafkaAppender"/>-->
+        </root>
+    </springProfile>
+
+    <!-- root 一个特殊的 logger 元素（根 logger），只有一个 level 属性用来设置日志级别，可以包含零个或多个 <appender-ref> 元素 -->
+    <root level="info">
+        <!-- 引用日志输出组件名称 -->
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE" />
+        <appender-ref ref="RollingFile" />
+    </root>
+</configuration>
