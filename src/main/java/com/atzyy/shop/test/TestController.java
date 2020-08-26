@@ -1,5 +1,6 @@
 package com.atzyy.shop.test;
 
+import com.atzyy.shop.exceptions.CommonException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,23 @@ public class TestController {
         log.warn("warn...");
         log.info("info...");
         log.error("error...");
+    }
+
+    @RequestMapping("/testException")
+    public void testException(){
+        throw new CommonException(500,"服务器异常");
+    }
+
+    @RequestMapping("/testExc")
+    public void testSystemExcetpion() throws Exception {
+        throw new Exception("1234");
+    }
+
+    @RequestMapping("/testError")
+    public void testError(){
+        int a = 1;
+        int b = 0;
+        log.info(String.valueOf(a/b));
     }
 
 }

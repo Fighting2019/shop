@@ -23,8 +23,8 @@ public class MvcConfig implements WebMvcConfigurer {
      * 添加拦截器
      * @param registry
      */
-    @Override
+    /*@Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new MyInterceptor()).addPathPatterns("/**").excludePathPatterns("/logon","/index.html");
-    }
+    }*/
 }
